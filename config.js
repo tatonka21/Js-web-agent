@@ -1,2 +1,2 @@
-const MODEL = "gpt-4o-mini";
-const API_URL = "https://api.openai.com/v1/chat/completions";
+const MODEL = "Llama-3-8B-Instruct-q4f16_1-MLC";
+const TEMPERATURE = 0.2;
