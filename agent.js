@@ -29,13 +29,14 @@ function extractJSON(text) {
 // -----------------------------
 // MAIN AGENT LOOP
 // -----------------------------
-async function agentLoop(goal, repo, token) {
+async function agentLoop(goal, repo, githubToken, openaiKey) {
   log("Agent starting…");
 
   let state = {
     goal,
     repo,
-    token,
+    githubToken,
+    openaiKey,
     memory: [],
     step: 0
   };
@@ -128,7 +129,7 @@ async function callLLM(state, prompt) {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: {
-      "Authorization": "Bearer " + state.token,
+      "Authorization": "Bearer " + state.openaiKey,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
