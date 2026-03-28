@@ -1,3 +1,34 @@
+// -----------------------------
+// JSON SANITIZER (GLOBAL)
+// -----------------------------
+function extractJSON(text) {
+  if (!text) return null;
+
+  // 1. Try direct parse
+  try {
+    return JSON.parse(text);
+  } catch {}
+
+  // 2. Extract first {...} block
+  const match = text.match(/\{[\s\S]*\}/);
+  if (match) {
+    try {
+      return JSON.parse(match[0]);
+    } catch {}
+  }
+
+  // 3. Replace single quotes with double quotes
+  try {
+    const fixed = text.replace(/'/g, '"');
+    return JSON.parse(fixed);
+  } catch {}
+
+  return null;
+}
+
+// -----------------------------
+// MAIN AGENT LOOP
+// -----------------------------
 async function agentLoop(goal, repo, token) {
   log("Agent starting…");
 
@@ -12,27 +43,47 @@ async function agentLoop(goal, repo, token) {
   while (true) {
     state.step++;
 
+    // -----------------------------
+    // THINK
+    // -----------------------------
     const thought = await callLLM(state, `
-You are an autonomous coding agent.
-Your goal: ${goal}
+You are an autonomous coding agent running entirely in the browser.
+
+Your mission:
+- Understand the user's goal
+- Choose the correct tool
+- Perform one action at a time
+- Move the project forward
+- Keep responses short and always valid JSON
+
+RULES:
+- Respond ONLY with valid JSON
+- NO backticks
+- NO explanations outside JSON
+- JSON format:
+{
+  "tool": "tool_name",
+  "args": { ... },
+  "note": "short explanation"
+}
+
+Goal: ${goal}
 
 Available tools:
 ${Object.keys(tools).join(", ")}
 
-State:
+Memory:
 ${JSON.stringify(state.memory)}
-
-Decide the next best action.
-Respond ONLY in JSON:
-{ "tool": "tool_name", "args": { ... }, "note": "why" }
     `);
 
     log("Thought: " + thought);
 
-    let action;
-    try {
-      action = JSON.parse(thought);
-    } catch {
+    // -----------------------------
+    // PARSE JSON SAFELY
+    // -----------------------------
+    let action = extractJSON(thought);
+
+    if (!action) {
       log("Invalid JSON from model, retrying…");
       continue;
     }
@@ -42,9 +93,21 @@ Respond ONLY in JSON:
       continue;
     }
 
+    // -----------------------------
+    // ACT
+    // -----------------------------
     log(`Executing tool: ${action.tool}`);
-    const result = await tools[action.tool](action.args, state);
 
+    let result;
+    try {
+      result = await tools[action.tool](action.args, state);
+    } catch (err) {
+      result = { error: err.toString() };
+    }
+
+    // -----------------------------
+    // REFLECT
+    // -----------------------------
     state.memory.push({
       step: state.step,
       action,
@@ -53,10 +116,14 @@ Respond ONLY in JSON:
 
     log("Result: " + JSON.stringify(result));
 
+    // Slow down loop slightly
     await sleep(1500);
   }
 }
 
+// -----------------------------
+// LLM CALL
+// -----------------------------
 async function callLLM(state, prompt) {
   const res = await fetch(API_URL, {
     method: "POST",
@@ -74,6 +141,9 @@ async function callLLM(state, prompt) {
   return data.choices?.[0]?.message?.content || "";
 }
 
+// -----------------------------
+// UTILS
+// -----------------------------
 function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
 }
