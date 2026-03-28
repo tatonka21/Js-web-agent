@@ -1,2 +1,3 @@
-const MODEL = "gpt-4o-mini";
-const API_URL = "https://api.openai.com/v1/chat/completions";
+// Choose a WebLLM model
+// Options include: "Llama-3-8B-Instruct-q4f32_1", "Qwen2.5-7B-Instruct-q4f32_1", etc.
+const WEBLLM_MODEL = "Llama-3-8B-Instruct-q4f32_1";
