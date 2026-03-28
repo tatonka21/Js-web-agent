@@ -1,8 +1,9 @@
+html
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>T’s Autonomous Agent</title>
+  <title>T’s Local WebLLM Agent</title>
   <style>
     body { font-family: Arial; padding: 20px; background: #111; color: #eee; }
     #log { white-space: pre-wrap; background: #222; padding: 10px; border-radius: 6px; height: 300px; overflow-y: scroll; }
@@ -10,19 +11,16 @@
     button { background: #4caf50; color: white; cursor: pointer; }
     button:hover { background: #45a049; }
   </style>
+
+  <!-- Load WebLLM -->
+  <script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/dist/web-llm.min.js"></script>
 </head>
 <body>
 
-<h1>🤖 T’s Autonomous Browser Agent</h1>
+<h1>🤖 T’s Local WebLLM Autonomous Agent</h1>
 
-<label for="goal">Goal for the agent:</label>
+<label>Goal for the agent:</label>
 <textarea id="goal" rows="3" placeholder="Example: Improve README.md in my repo"></textarea>
-
-<label for="openaiKey">OpenAI API Key:</label>
-<input id="openaiKey" type="password" placeholder="sk-..." />
-
-<label for="token">GitHub Token (fine-grained):</label>
-<input id="token" type="password" placeholder="ghp_..." />
 
 <label>Repository (owner/repo):</label>
 <input id="repo" placeholder="username/repo" />
