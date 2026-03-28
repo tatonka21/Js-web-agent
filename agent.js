@@ -122,15 +122,44 @@ ${JSON.stringify(state.memory)}
 }
 
 let webLLMEnginePromise;
+let webLLMEngineFailed = false;
 
 async function getWebLLMEngine() {
+  if (webLLMEngineFailed) {
+    const error = new Error("WebLLM failed to initialize earlier. Please refresh the page once your environment is ready.");
+    log(error.message);
+    throw error;
+  }
   if (!webLLMEnginePromise) {
-    webLLMEnginePromise = webllm.CreateMLCEngine(MODEL, {
+    if (typeof WebAssembly === "undefined") {
+      const error = new Error("WebAssembly is required for WebLLM. Please use a modern browser that supports WebAssembly.");
+      log(error.message);
+      throw error;
+    }
+    if (!("gpu" in navigator)) {
+      const error = new Error("WebGPU is required for WebLLM. Please enable WebGPU or switch to a browser with WebGPU support.");
+      log(error.message);
+      throw error;
+    }
+    const webLLMAPI = window.webllm;
+    // WebLLM >=0.2.x exposes CreateMLCEngine; older builds exposed CreateEngine.
+    const createEngine = webLLMAPI?.CreateMLCEngine || webLLMAPI?.CreateEngine;
+    if (!createEngine || typeof createEngine !== "function") {
+      const error = new Error("WebLLM library not loaded. Please refresh after the library finishes loading.");
+      log(error.message);
+      throw error;
+    }
+    // CreateMLCEngine is the current API; CreateEngine covers older library builds.
+    webLLMEnginePromise = createEngine(MODEL, {
       initProgressCallback: (info) => {
         if (info?.text) {
           log("Model load: " + info.text);
         }
       }
+    }).catch((err) => {
+      log("Model load failed: " + err.toString());
+      webLLMEngineFailed = true;
+      throw err;
     });
   }
   return webLLMEnginePromise;
@@ -142,10 +171,9 @@ async function getWebLLMEngine() {
 async function callLLM(state, prompt) {
   const engine = await getWebLLMEngine();
   const response = await engine.chat.completions.create({
-    model: MODEL,
     messages: [{ role: "user", content: prompt }],
     stream: false,
-    temperature: 0.2
+    temperature: TEMPERATURE
   });
 
   return response.choices?.[0]?.message?.content || "";

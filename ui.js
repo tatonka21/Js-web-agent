@@ -5,6 +5,10 @@ function log(msg) {
 }
 
 function startAgent() {
+  if (!window.webllm) {
+    log("WebLLM is still loading. Please wait a moment and try again.");
+    return;
+  }
   const goal = document.getElementById("goal").value;
   const githubToken = document.getElementById("token").value;
   const repo = document.getElementById("repo").value;

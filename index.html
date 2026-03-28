@@ -10,6 +10,7 @@
     button { background: #4caf50; color: white; cursor: pointer; }
     button:hover { background: #45a049; }
   </style>
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.82/lib/index.js" integrity="sha384-2Tjus67Z6N7N+ljqQWnpSEcinnggT4SKOBml1BGnUXSbSGg7q1FgUxJOnIKyn0W4" crossorigin="anonymous" />
 </head>
 <body>
 
@@ -31,11 +32,14 @@
 <h2>Agent Log</h2>
 <div id="log"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/dist/web-llm.min.js"></script>
-<script src="config.js"></script>
-<script src="tools.js"></script>
-<script src="agent.js"></script>
-<script src="ui.js"></script>
+<script type="module">
+  import * as webllm from "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.82/lib/index.js";
+  window.webllm = webllm;
+</script>
+<script src="config.js" defer></script>
+<script src="tools.js" defer></script>
+<script src="agent.js" defer></script>
+<script src="ui.js" defer></script>
 
 </body>
 </html>
