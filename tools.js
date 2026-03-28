@@ -2,7 +2,7 @@ const tools = {
   read_file: async ({ path }, state) => {
     const url = `https://api.github.com/repos/${state.repo}/contents/${path}`;
     const res = await fetch(url, {
-      headers: { Authorization: "Bearer " + state.token }
+      headers: { Authorization: "Bearer " + state.githubToken }
     });
     const data = await res.json();
     if (data.content) {
@@ -16,7 +16,7 @@ const tools = {
 
     let sha = null;
     const existing = await fetch(url, {
-      headers: { Authorization: "Bearer " + state.token }
+      headers: { Authorization: "Bearer " + state.githubToken }
     });
     if (existing.status === 200) {
       const json = await existing.json();
@@ -26,7 +26,7 @@ const tools = {
     const res = await fetch(url, {
       method: "PUT",
       headers: {
-        Authorization: "Bearer " + state.token,
+        Authorization: "Bearer " + state.githubToken,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -45,7 +45,7 @@ const tools = {
     const res = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: "Bearer " + state.token,
+        Authorization: "Bearer " + state.githubToken,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({

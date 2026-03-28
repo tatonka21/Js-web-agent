@@ -6,13 +6,14 @@ function log(msg) {
 
 function startAgent() {
   const goal = document.getElementById("goal").value;
-  const token = document.getElementById("token").value;
+  const githubToken = document.getElementById("token").value;
   const repo = document.getElementById("repo").value;
+  const openaiKey = document.getElementById("openaiKey").value;
 
-  if (!goal || !token || !repo) {
+  if (!goal || !githubToken || !repo || !openaiKey) {
     log("Missing fields.");
     return;
   }
 
-  agentLoop(goal, repo, token);
+  agentLoop(goal, repo, githubToken, openaiKey);
 }
