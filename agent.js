@@ -29,14 +29,13 @@ function extractJSON(text) {
 // -----------------------------
 // MAIN AGENT LOOP
 // -----------------------------
-async function agentLoop(goal, repo, githubToken, openaiKey) {
+async function agentLoop(goal, repo, githubToken) {
   log("Agent starting…");
 
   let state = {
     goal,
     repo,
     githubToken,
-    openaiKey,
     memory: [],
     step: 0
   };
@@ -122,24 +121,34 @@ ${JSON.stringify(state.memory)}
   }
 }
 
+let webLLMEnginePromise;
+
+async function getWebLLMEngine() {
+  if (!webLLMEnginePromise) {
+    webLLMEnginePromise = webllm.CreateMLCEngine(MODEL, {
+      initProgressCallback: (info) => {
+        if (info?.text) {
+          log("Model load: " + info.text);
+        }
+      }
+    });
+  }
+  return webLLMEnginePromise;
+}
+
 // -----------------------------
 // LLM CALL
 // -----------------------------
 async function callLLM(state, prompt) {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer " + state.openaiKey,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [{ role: "user", content: prompt }]
-    })
+  const engine = await getWebLLMEngine();
+  const response = await engine.chat.completions.create({
+    model: MODEL,
+    messages: [{ role: "user", content: prompt }],
+    stream: false,
+    temperature: 0.2
   });
 
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || "";
+  return response.choices?.[0]?.message?.content || "";
 }
 
 // -----------------------------
