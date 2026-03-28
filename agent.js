@@ -1,23 +1,16 @@
 // -----------------------------
-// JSON SANITIZER (GLOBAL)
+// JSON SANITIZER
 // -----------------------------
 function extractJSON(text) {
   if (!text) return null;
 
-  // 1. Try direct parse
-  try {
-    return JSON.parse(text);
-  } catch {}
+  try { return JSON.parse(text); } catch {}
 
-  // 2. Extract first {...} block
   const match = text.match(/\{[\s\S]*\}/);
   if (match) {
-    try {
-      return JSON.parse(match[0]);
-    } catch {}
+    try { return JSON.parse(match[0]); } catch {}
   }
 
-  // 3. Replace single quotes with double quotes
   try {
     const fixed = text.replace(/'/g, '"');
     return JSON.parse(fixed);
@@ -27,16 +20,35 @@ function extractJSON(text) {
 }
 
 // -----------------------------
+// INITIALIZE WEBLLM
+// -----------------------------
+let webllm = null;
+let webllmReady = false;
+
+async function initWebLLM() {
+  if (webllmReady) return;
+
+  log("Loading WebLLM model (first load may take 10–30 seconds)…");
+
+  webllm = await webllmInit({
+    model: WEBLLM_MODEL
+  });
+
+  webllmReady = true;
+  log("WebLLM model loaded!");
+}
+
+// -----------------------------
 // MAIN AGENT LOOP
 // -----------------------------
-async function agentLoop(goal, repo, githubToken, openaiKey) {
+async function agentLoop(goal, repo) {
+  await initWebLLM();
+
   log("Agent starting…");
 
   let state = {
     goal,
     repo,
-    githubToken,
-    openaiKey,
     memory: [],
     step: 0
   };
@@ -44,11 +56,9 @@ async function agentLoop(goal, repo, githubToken, openaiKey) {
   while (true) {
     state.step++;
 
-    // -----------------------------
     // THINK
-    // -----------------------------
-    const thought = await callLLM(state, `
-You are an autonomous coding agent running entirely in the browser.
+    const prompt = `
+You are an autonomous coding agent running entirely in the browser using WebLLM.
 
 Your mission:
 - Understand the user's goal
@@ -75,13 +85,12 @@ ${Object.keys(tools).join(", ")}
 
 Memory:
 ${JSON.stringify(state.memory)}
-    `);
+`;
 
+    const thought = await callWebLLM(prompt);
     log("Thought: " + thought);
 
-    // -----------------------------
-    // PARSE JSON SAFELY
-    // -----------------------------
+    // PARSE JSON
     let action = extractJSON(thought);
 
     if (!action) {
@@ -94,9 +103,7 @@ ${JSON.stringify(state.memory)}
       continue;
     }
 
-    // -----------------------------
     // ACT
-    // -----------------------------
     log(`Executing tool: ${action.tool}`);
 
     let result;
@@ -106,9 +113,7 @@ ${JSON.stringify(state.memory)}
       result = { error: err.toString() };
     }
 
-    // -----------------------------
     // REFLECT
-    // -----------------------------
     state.memory.push({
       step: state.step,
       action,
@@ -117,29 +122,19 @@ ${JSON.stringify(state.memory)}
 
     log("Result: " + JSON.stringify(result));
 
-    // Slow down loop slightly
     await sleep(1500);
   }
 }
 
 // -----------------------------
-// LLM CALL
+// CALL WEBLLM
 // -----------------------------
-async function callLLM(state, prompt) {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer " + state.openaiKey,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [{ role: "user", content: prompt }]
-    })
+async function callWebLLM(prompt) {
+  const reply = await webllm.chat.completions.create({
+    messages: [{ role: "user", content: prompt }]
   });
 
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || "";
+  return reply.choices?.[0]?.message?.content || "";
 }
 
 // -----------------------------
