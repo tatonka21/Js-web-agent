@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>T’s Autonomous Agent</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #111; color: #eee; }
+    #log { white-space: pre-wrap; background: #222; padding: 10px; border-radius: 6px; height: 300px; overflow-y: scroll; }
+    input, button, textarea { width: 100%; margin-top: 10px; padding: 8px; border-radius: 6px; border: none; }
+    button { background: #4caf50; color: white; cursor: pointer; }
+    button:hover { background: #45a049; }
+  </style>
+</head>
+<body>
+
+<h1>🤖 T’s Autonomous Browser Agent</h1>
+
+<label>Goal for the agent:</label>
+<textarea id="goal" rows="3" placeholder="Example: Improve README.md in my repo"></textarea>
+
+<label>GitHub Token (fine-grained):</label>
+<input id="token" type="password" placeholder="ghp_..." />
+
+<label>Repository (owner/repo):</label>
+<input id="repo" placeholder="username/repo" />
+
+<button onclick="startAgent()">Start Agent</button>
+
+<h2>Agent Log</h2>
+<div id="log"></div>
+
+<script src="config.js"></script>
+<script src="tools.js"></script>
+<script src="agent.js"></script>
+<script src="ui.js"></script>
+
+</body>
+</html>
